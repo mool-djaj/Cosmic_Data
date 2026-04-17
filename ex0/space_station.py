@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
+
 from pydantic import BaseModel, Field, ValidationError
 
 
@@ -14,7 +15,7 @@ class SpaceStation(BaseModel):
     notes: Optional[str] = Field(default=None, max_length=200)
 
 
-def main():
+def main() -> None:
     print("Space Station Data Validation")
     print("========================================")
 
@@ -25,36 +26,39 @@ def main():
             crew_size=6,
             power_level=85.5,
             oxygen_level=92.3,
-            last_maintenance="2026-04-17T12:00:00Z", 
-            is_operational=True
+            last_maintenance=datetime(2026, 4, 17, 12, 0, tzinfo=timezone.utc),
+            is_operational=True,
         )
-        
+
         print("Valid station created:")
         print(f"ID: {valid_station.station_id}")
         print(f"Name: {valid_station.name}")
         print(f"Crew: {valid_station.crew_size} people")
         print(f"Power: {valid_station.power_level}%")
         print(f"Oxygen: {valid_station.oxygen_level}%")
-        print(f"Status: {'Operational' if valid_station.is_operational else 'Offline'}")
+        if valid_station.is_operational:
+            print("Status: Operational")
+        else:
+            print("Status: Offline")
 
-    except ValidationError as e:
-        print(f"Unexpected error creating valid station: {e}")
+    except ValidationError as error:
+        print(f"Unexpected error creating valid station: {error}")
 
     print("========================================")
-    
     print("Expected validation error:")
+
     try:
-        invalid_station = SpaceStation(
+        SpaceStation(
             station_id="ISS002",
             name="Alpha Base",
             crew_size=25,
             power_level=90.0,
             oxygen_level=95.0,
-            last_maintenance="2026-04-16T10:00:00Z"
+            last_maintenance=datetime(2026, 4, 16, 10, 0, tzinfo=timezone.utc),
         )
-    except ValidationError as e:
-        for error in e.errors():
-            print(error['msg'])
+    except ValidationError as error:
+        for item in error.errors():
+            print(item["msg"])
 
 
 if __name__ == "__main__":
